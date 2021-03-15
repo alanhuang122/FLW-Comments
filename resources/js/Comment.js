@@ -23,6 +23,7 @@
 		 */
 		show: function ( id ) {
 			$( '#ignore-' + id ).hide( 300 );
+			$( '#deleted-' + id ).hide( 300 );
 			$( '#comment-' + id ).show( 300 );
 		},
 

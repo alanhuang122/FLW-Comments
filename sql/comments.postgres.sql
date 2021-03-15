@@ -9,7 +9,8 @@ CREATE TABLE "Comments" (
   Comment_Text TEXT NOT NULL,
   Comment_Date TIMESTAMPTZ NOT NULL DEFAULT now(),
   Comment_Parent_ID INTEGER NOT NULL DEFAULT 0,
-  Comment_IP TEXT NOT NULL DEFAULT ''
+  Comment_IP TEXT NOT NULL DEFAULT '',
+  Comment_Deleted INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS comment_page_id_index ON Comments (Comment_Page_ID);

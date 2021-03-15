@@ -114,6 +114,13 @@ class Comment extends ContextSource {
 	 */
 	public $timestamp = null;
 
+    /**
+     * Boolean value showing whether the comment was deleted
+     *
+     * @var bool
+     */
+    public $deleted = false;
+
 	/**
 	 * Constructor - set the page ID
 	 *
@@ -138,7 +145,8 @@ class Comment extends ContextSource {
 		$this->id = (int)$data['CommentID'];
 		$this->parentID = (int)$data['Comment_Parent_ID'];
 		$this->thread = $data['thread'];
-		$this->timestamp = $data['timestamp'];
+        $this->timestamp = $data['timestamp'];
+        $this->deleted = $data['deleted'];
 
 		if ( isset( $data['current_vote'] ) ) {
 			$vote = $data['current_vote'];
@@ -360,7 +368,8 @@ class Comment extends ContextSource {
 			'CommentID' => $id,
 			'Comment_Parent_ID' => $parentID,
 			'thread' => $thread,
-			'timestamp' => strtotime( $commentDate )
+			'timestamp' => strtotime( $commentDate ),
+            'deleted' => 0
 		];
 
 		$page = new CommentsPage( $page->id, $context );
@@ -657,8 +666,9 @@ class Comment extends ContextSource {
 	function delete() {
 		$dbw = wfGetDB( DB_MASTER );
 		$dbw->startAtomic( __METHOD__ );
-		$dbw->delete(
-			'Comments',
+		$dbw->update(
+            'Comments',
+            [ 'Comment_Deleted' => 1 ],
 			[ 'CommentID' => $this->id ],
 			__METHOD__
 		);
@@ -766,6 +776,8 @@ class Comment extends ContextSource {
 	 * @return string HTML
 	 */
 	function display( $blockList, $anonList ) {
+        $userObj = $this->getUser();
+
 		if ( $this->parentID == 0 ) {
 			$container_class = 'full';
 		} else {
@@ -774,7 +786,13 @@ class Comment extends ContextSource {
 
 		$output = '';
 
-		if ( in_array( $this->username, $blockList ) ) {
+        if ( $this->deleted ) {
+            $output .= $this->showDeleted( false, $container_class );
+            if ( $userObj->isAllowed( 'commentadmin' ) ) {
+                $output .= $this->showComment( true, $container_class, $blockList, $anonList );
+            }
+        }
+        elseif ( in_array( $this->username, $blockList ) ) {
 			$output .= $this->showIgnore( false, $container_class );
 			$output .= $this->showComment( true, $container_class, $blockList, $anonList );
 		} else {
@@ -784,6 +802,27 @@ class Comment extends ContextSource {
 
 		return $output;
 	}
+
+    function showDeleted( $hide = false, $containerClass ) {
+		$userObj = $this->getUser();
+
+        $style = '';
+        if ( $hide ) {
+            $style = " style='display:none;'";
+        }
+
+		$output = "<div id='deleted-{$this->id}' class='c-deleted {$containerClass}'{$style}>\n";
+		$output .= wfMessage( 'comments-deleted-message' )->parse();
+        if ( $userObj->isAllowed( 'commentadmin' ) ) {
+            $output .= '<div class="c-ignored-links">' . "\n";
+            $output .= "<a href=\"javascript:void(0);\" data-comment-id=\"{$this->id}\">" .
+                $this->msg( 'comments-show-comment-link' )->plain() . '</a>';
+            $output .= '</div>' . "\n";
+        }
+		$output .= '</div>' . "\n";
+
+		return $output;
+    }
 
 	/**
 	 * Show the box for if this comment has been ignored
@@ -856,12 +895,12 @@ class Comment extends ContextSource {
 		$userObj = $this->getUser();
 		$dlt = '';
 
-		if (
+		if ( !$this->deleted && (
 			$userObj->isAllowed( 'commentadmin' ) ||
 			// Allow users to delete their own comments if that feature is enabled in
 			// site configuration
 			// @see https://phabricator.wikimedia.org/T147796
-			$userObj->isAllowed( 'comment-delete-own' ) && $this->isOwner( $userObj )
+			$userObj->isAllowed( 'comment-delete-own' ) && $this->isOwner( $userObj ) )
 		) {
 			$dlt = ' | <span class="c-delete">' .
 				'<a href="javascript:void(0);" rel="nofollow" class="comment-delete-link" data-comment-id="' .

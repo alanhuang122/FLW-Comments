@@ -124,7 +124,8 @@ class CommentsPage extends ContextSource {
 		$s = $dbr->selectRow(
 			'Comments',
 			[ 'CommentID' ],
-			[ 'Comment_Page_ID' => $this->id ],
+            [ 'Comment_Page_ID' => $this->id,
+              'Comment_Deleted' => 0 ],
 			__METHOD__,
 			[ 'ORDER BY' => 'Comment_Date DESC', 'LIMIT' => 1 ]
 		);
@@ -181,7 +182,8 @@ class CommentsPage extends ContextSource {
 			// I just lazily slapped current_vote (and stats_total_points in the "if SP is installed" loop)
 			// to the GROUP BY condition to try to remedy this. --ashley, 17 January 2020
 			'vote1.Comment_Vote_Score AS current_vote',
-			'SUM(vote2.Comment_Vote_Score) AS comment_score'
+			'SUM(vote2.Comment_Vote_Score) AS comment_score',
+            'Comment_Deleted'
 		];
 		$joinConds = [
 			// For current user's vote
@@ -241,6 +243,7 @@ class CommentsPage extends ContextSource {
 				'timestamp' => wfTimestamp( TS_UNIX, $row->timestamp ),
 				'current_vote' => ( isset( $row->current_vote ) ? $row->current_vote : false ),
 				'total_vote' => ( isset( $row->comment_score ) ? $row->comment_score : 0 ),
+                'deleted' => $row->Comment_Deleted == 1,
 			];
 
 			$comments[] = new Comment( $this, $this->getContext(), $data );
