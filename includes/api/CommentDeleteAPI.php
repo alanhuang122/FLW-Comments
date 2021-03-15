@@ -19,6 +19,11 @@ class CommentDeleteAPI extends ApiBase {
 
 		$comment->delete();
 
+        $pageID = $comment->page->id;
+        $title = Title::newFromId( $pageID );
+        $job = new HTMLCacheUpdateJob( $title, [] );
+        JobQueueGroup::singleton()->lazyPush( $job );
+
 		$result = $this->getResult();
 		$result->addValue( $this->getModuleName(), 'ok', 'ok' );
 		return true;

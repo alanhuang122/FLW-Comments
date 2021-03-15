@@ -51,6 +51,9 @@ class CommentSubmitAPI extends ApiBase {
 
 			Comment::add( $commentText, $page, $user, $this->getMain()->getVal( 'parentID' ) );
 
+            $job = new HTMLCacheUpdateJob( $title, [] );
+            JobQueueGroup::singleton()->lazyPush($job);
+
 			if ( class_exists( 'UserStatsTrack' ) ) {
 				$stats = new UserStatsTrack( $user->getId(), $user->getName() );
 				$stats->incStatField( 'comment' );
