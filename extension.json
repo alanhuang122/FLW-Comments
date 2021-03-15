@@ -85,7 +85,9 @@
 		"CommentListAPI": "includes/api/CommentListAPI.php",
 		"CommentSubmitAPI": "includes/api/CommentSubmitAPI.php",
 		"CommentVoteAPI": "includes/api/CommentVoteAPI.php",
-		"EchoMentionCommentPresentationModel": "includes/notifications/EchoMentionCommentPresentationModel.php"
+		"EchoMentionCommentPresentationModel": "includes/notifications/EchoMentionCommentPresentationModel.php",
+		"EchoReplyCommentPresentationModel": "includes/notifications/EchoReplyCommentPresentationModel.php",
+		"EchoWatchedCommentPresentationModel": "includes/notifications/EchoWatchedCommentPresentationModel.php"
 	},
 	"ResourceModules": {
 		"ext.comments.css": {

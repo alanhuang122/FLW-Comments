@@ -34,30 +34,53 @@ class CommentsHooks {
 	 * @param array &$icons Icon details
 	 */
 	public static function onBeforeCreateEchoEvent( &$notifications, &$notificationCategories, &$icons ) {
-		$notifications['mention-comment'] = [
-			'presentation-model' => 'EchoMentionCommentPresentationModel'
-		];
 		$notificationCategories['mention-comment'] = [
 			'priority' => 4,
 			'tooltip' => 'echo-pref-tooltip-mention-comment',
 		];
 
 		$notifications['mention-comment'] = [
-			'category' => 'mention',
+			'category' => 'mention-comment',
 			'group' => 'interactive',
 			'section' => 'alert',
 			'presentation-model' => 'EchoMentionCommentPresentationModel',
-			'user-locators' => [
-				[
-					'EchoUserLocator::locateFromEventExtra',
-					[
-						'mentioned-users'
-					]
-				]
-			],
-			// @todo FIXME: I've no clue if this is still actually used/needed...
-			'bundle' => [ 'web' => true, 'email' => true ],
+            'user-locators' => [ [ 'EchoUserLocator::locateFromEventExtra', [ 'mentioned-users' ] ] ]
+        ];
+
+        $icons['mention-comment']['path'] = 'Echo/modules/icons/mention-progressive.svg';
+
+		$notificationCategories['reply-comment'] = [
+			'priority' => 4,
+			'tooltip' => 'echo-pref-tooltip-reply-comment',
 		];
+
+		$notifications['reply-comment'] = [
+			'category' => 'reply-comment',
+			'group' => 'interactive',
+			'section' => 'alert',
+			'presentation-model' => 'EchoReplyCommentPresentationModel',
+			'user-locators' => [ [ 'EchoUserLocator::locateFromEventExtra', [ 'thread-users' ] ] ],
+            'user-filters' => [ [ 'EchoUserLocator::locateFromEventExtra', [ 'mentioned-users' ] ] ]
+		];
+
+        $icons['reply-comment']['path'] = 'Echo/modules/icons/edit-user-talk-progressive.svg';
+        
+        $notificationCategories['watched-comment'] = [
+			'priority' => 4,
+			'tooltip' => 'echo-pref-tooltip-watched-comment',
+		];
+
+		$notifications['watched-comment'] = [
+			'category' => 'watched-comment',
+			'group' => 'neutral',
+			'section' => 'message',
+			'presentation-model' => 'EchoWatchedCommentPresentationModel',
+			'user-locators' => [ 'EchoUserLocator::locateUsersWatchingTitle' ],
+            'user-filters' => [ [ 'EchoUserLocator::locateFromEventExtra', [ 'mentioned-users' ] ],
+                                [ 'EchoUserLocator::locateFromEventExtra', [ 'thread-users' ] ] ]
+		];
+
+        $icons['watched-comment']['path'] = 'Echo/modules/icons/speechBubbles-ltr-progressive.svg';
 	}
 
     public static function onBeforePageDisplay( OutputPage $out, Skin $skin ) {

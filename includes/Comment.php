@@ -376,15 +376,12 @@ class Comment extends ContextSource {
 		$comment = new Comment( $page, $context, $data );
 
 		if ( ExtensionRegistry::getInstance()->isLoaded( 'Echo' ) ) {
-			global $wgEchoMentionOnChanges;
-			if ( !$wgEchoMentionOnChanges ) {
-				return;
-			}
 			// Modified copypasta of EchoDiscussionParser#generateEventsForRevision with less Revision-ism!
 			// (Awful pun is awful, sorry about that.)
 			// EchoDiscussionParser#getChangeInterpretationForRevision is *way*, way too Revision-ist for
 			// our tastes. DO NOT WANT!
 			$title = Title::newFromId( $page->id );
+            $revId = $title->getLatestRevID();
 
 			// EchoDiscussionParser#getUserLinks is private, because of course it is.
 			// Here we go once again...
@@ -400,19 +397,35 @@ class Comment extends ContextSource {
 			};
 
 			// stolen from EchoDiscussionParser#generateEventsForRevision
-			$action = [];
-			$action['old_content'] = '';
-			$action['new_content'] = $text;
-			$userLinks = array_diff_key(
-				$getUserLinks( $action['new_content'], $title ) ?: [],
-				$getUserLinks( $action['old_content'], $title ) ?: []
-			);
-			$header = $text;
+            $userLinks = $getUserLinks ( $text, $title ) ?: [];
+
+            $userMentions = self::getUserMentions( $userLinks, $title, $user );
+            $threadUsers = self::getThreadUsers ( $commentId, $parentID );
+
+            wfDebugLog('CommentMentions', print_r( $userMentions, true) );
+
+            EchoEvent::create( [
+				'type' => 'watched-comment',
+				'title' => $title,
+				'extra' => [
+					'content' => $text,
+					'section-title' => $text,
+					'revid' => $revId,
+					'comment-id' => $commentId, // added
+                    'mentioned-users' => $userMentions['validMentions'],
+                    'thread-users' => $threadUsers
+				],
+				'agent' => $user,
+			] );
 
 			self::generateMentionEvents(
-				$header, $userLinks, $action['new_content'], $title, $user,
+				$text, $userMentions, $text, $title, $user,
 				$comment, $commentId
 			);
+
+            if ( $parentID !== 0 ) {
+                self::generateThreadEvents( $title, $text, $text, $revId, $userMentions, $threadUsers, $user, $commentId );
+            }
 		}
 
 		Hooks::run( 'Comment::add', [ $comment, $commentId, $comment->page->id ] );
@@ -443,6 +456,91 @@ class Comment extends ContextSource {
 		return $output;
 	}
 
+    public static function getUserMentions ( $userLinks, $title, $agent ) {
+		// $title = $revision->getTitle();
+		if ( !$title ) {
+			return;
+		}
+		// Comments are often short. These Echo-isms mutilate $content into an empty string.
+		// We don't want that to happen.
+		// $content = EchoDiscussionParser::stripHeader( $content );
+		// $content = EchoDiscussionParser::stripSignature( $content, $title );
+		if ( !$userLinks ) {
+			return;
+		}
+
+		// WHY IS EVERYTHING PRIVATE?! WTF.
+		$r = new ReflectionMethod( 'EchoDiscussionParser', 'getUserMentions' );
+		$r->setAccessible( true );
+		$userMentions = $r->invoke( $r, $title, $agent->getId(), $userLinks );
+
+        wfDebugLog('CommentMentions', '$userMentions is ' . print_r( $userMentions, true ) );
+
+        return $userMentions;
+    }
+
+    public static function getThreadUsers ( $commentId, $parentId ) {
+        if ( $parentId == 0 ) {
+            return [];
+        }
+        $users = [];
+
+        $dbr = wfGetDB( DB_REPLICA );
+        $parent_res = $dbr->select(
+            ['Comments',
+             'actor',
+             'user'],
+            'user_id',
+            "CommentID = $parentId",
+            __METHOD__,
+            $options = [],
+            $join_conds = [
+                'actor' => [ 'JOIN', 'Comment_actor = actor_id' ],
+                'user' => [ 'JOIN', 'actor_user = user_id' ]
+            ]
+        );
+
+        foreach ( $parent_res as $row ) {
+            $users[] = $row->user_id;
+        }
+        $reply_res = $dbr->select(
+            ['Comments',
+             'actor',
+             'user'],
+            'user_id',
+            ["Comment_Parent_ID" => strval($parentId),
+             "CommentID <> $commentId" ],
+            __METHOD__,
+            $options = [ 'DISTINCT' ],
+            $join_conds = [
+                'actor' => [ 'JOIN', 'Comment_actor = actor_id' ],
+                'user' => [ 'JOIN', 'actor_user = user_id' ]
+            ]
+        );
+
+        foreach ( $reply_res as $row ) {
+            $users[] = $row->user_id;
+        }
+
+        return $users;
+    }
+
+    public static function generateThreadEvents($title, $content, $header, $revId, $userMentions, $users, $agent, $commentId ) {
+        EchoEvent::create( [
+            'type' => 'reply-comment',
+            'title' => $title,
+            'extra' => [
+                'content' => $content,
+                'section-title' => $header,
+                'revid' => $revId,
+                'comment-id' => $commentId, // added
+                'mentioned-users' => $userMentions['validMentions'],
+                'thread-users' => $users
+            ],
+            'agent' => $agent,
+        ] );
+    }
+
 	/**
 	 * For an action taken on a talk page, notify users whose user pages are linked.
 	 *
@@ -459,35 +557,16 @@ class Comment extends ContextSource {
 	 */
 	public static function generateMentionEvents(
 		$header,
-		$userLinks,
+		$userMentions,
 		$content,
 		Title $title,
-		// Revision $revision,
 		User $agent,
 		Comment $comment,
 		$commentId
 	) {
 		global $wgEchoMaxMentionsCount, $wgEchoMentionStatusNotifications;
 
-		// $title = $revision->getTitle();
-		if ( !$title ) {
-			return;
-		}
-		$revId = $title->getLatestRevID();
-		// Comments are often short. These Echo-isms mutilate $content into an empty string.
-		// We don't want that to happen.
-		// $content = EchoDiscussionParser::stripHeader( $content );
-		// $content = EchoDiscussionParser::stripSignature( $content, $title );
-		if ( !$userLinks ) {
-			return;
-		}
-
-		// WHY IS EVERYTHING PRIVATE?! WTF.
-		$r = new ReflectionMethod( 'EchoDiscussionParser', 'getUserMentions' );
-		$r->setAccessible( true );
-		$userMentions = $r->invoke( $r, $title, $agent->getId(), $userLinks );
-		// $userMentions = EchoDiscussionParser::getUserMentions( $title, $agent->getId(), $userLinks );
-		// $overallMentionsCount = EchoDiscussionParser::getOverallUserMentionsCount( $userMentions );
+        $revId = $title->getLatestRevID();
 		$overallMentionsCount = count( $userMentions, COUNT_RECURSIVE ) - count( $userMentions );
 		if ( $overallMentionsCount === 0 ) {
 			return;

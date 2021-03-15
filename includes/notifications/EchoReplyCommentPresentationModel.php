@@ -5,7 +5,7 @@
  * @file
  * @date 8 August 2019
  */
-class EchoMentionCommentPresentationModel extends EchoMentionPresentationModel {
+class EchoReplyCommentPresentationModel extends EchoEventPresentationModel {
 
 	/**
 	 * @var EchoPresentationModelSection
@@ -24,7 +24,7 @@ class EchoMentionCommentPresentationModel extends EchoMentionPresentationModel {
 	 * @return string The symbolic icon name as defined in $wgEchoNotificationIcons
 	 */
 	public function getIconType() {
-		return 'mention';
+		return 'reply-comment';
 	}
 
 	/**
@@ -42,7 +42,7 @@ class EchoMentionCommentPresentationModel extends EchoMentionPresentationModel {
 	 */
 	protected function getHeaderMessageKey() {
 		if ( $this->event->getExtraParam( 'comment-id' ) ) {
-			return 'notification-header-mention-comment';
+			return 'notification-header-reply-comment';
 		}
 		return parent::getHeaderMessageKey();
 	}
@@ -116,18 +116,18 @@ class EchoMentionCommentPresentationModel extends EchoMentionPresentationModel {
 	 *                    ['url' => (string) url, 'label' => (string) link text (non-escaped)]
 	 */
 	public function getPrimaryLink() {
-        $title = $this->event->getTitle();
+		$title = $this->event->getTitle();
 
 		if ( $this->event->getExtraParam( 'comment-id' ) ) {
 			$url = $title->getLocalURL() . '#comment-' . $this->event->getExtraParam( 'comment-id' );
         }
         else {
-            $url = $this->section->getTitleWithSection()->getFullURL();
+			$url = $this->section->getTitleWithSection()->getFullURL();
         }
 		return [
 			// Need FullURL so the section is included
 			'url' => $url,
-			'label' => $this->msg( 'notification-link-text-view-mention' )->text()
+			'label' => $this->msg( 'notification-link-text-view-comment' )->text()
 		];
 	}
 
@@ -144,7 +144,7 @@ class EchoMentionCommentPresentationModel extends EchoMentionPresentationModel {
 			$url = $title->getLocalURL() . '#comment-' . $this->event->getExtraParam( 'comment-id' );
 			$viewChangesLink = [
 				'url' => $url,
-				'label' => $this->msg( 'notification-link-text-view-mention', $this->getViewingUserForGender() )->text(),
+				'label' => $this->msg( 'notification-link-text-view-comment', $this->getViewingUserForGender() )->text(),
 				'description' => '',
 				'icon' => 'changes',
 				'prioritized' => true,
