@@ -9,7 +9,7 @@ class CommentListAPI extends ApiBase {
 
 		$output = '';
 		if ( $this->getMain()->getVal( 'showForm' ) ) {
-			$output .= $commentsPage->displayOrderForm();
+			//$output .= $commentsPage->displayOrderForm();
 		}
 		$output .= $commentsPage->display();
 		if ( $this->getMain()->getVal( 'showForm' ) ) {

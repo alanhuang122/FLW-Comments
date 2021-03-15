@@ -63,7 +63,7 @@ class DisplayComments {
 		$commentsPage->allow = $allow;
 		$commentsPage->setVoting( $voting );
 
-		$output = '<div class="comments-body">';
+		$output = '<div class="comments-body" id="comments-body">';
 
 		if ( $wgCommentsSortDescending ) { // form before comments
 			$output .= '<a id="end" rel="nofollow"></a>';
@@ -74,7 +74,7 @@ class DisplayComments {
 			}
 		}
 
-		$output .= $commentsPage->displayOrderForm();
+		//$output .= $commentsPage->displayOrderForm();
 
 		$output .= '<div id="allcomments">' . $commentsPage->display() . '</div>';
 

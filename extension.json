@@ -130,7 +130,8 @@
 		"ParserFirstCallInit": "CommentsHooks::onParserFirstCallInit",
 		"LoadExtensionSchemaUpdates": "CommentsHooks::onLoadExtensionSchemaUpdates",
 		"MagicWordwgVariableIDs": "NumberOfComments::onMagicWordwgVariableIDs",
-		"ParserGetVariableValueSwitch": "NumberOfComments::onParserGetVariableValueSwitch"
+		"ParserGetVariableValueSwitch": "NumberOfComments::onParserGetVariableValueSwitch",
+        "BeforePageDisplay": "CommentsHooks::onBeforePageDisplay"
 	},
 	"config": {
 		"CommentsDefaultAvatar": "http://www.shoutwiki.com/w/extensions/SocialProfile/avatars/default_ml.gif",

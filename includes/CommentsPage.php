@@ -544,7 +544,7 @@ class CommentsPage extends ContextSource {
 			</div>
 			<div class="visualClear"></div>
 		</div>
-		<br />' . "\n";
+		' . "\n";
 
 		return $output;
 	}

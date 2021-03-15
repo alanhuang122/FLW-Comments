@@ -1,4 +1,5 @@
 <?php
+use MediaWiki\MediaWikiServices;
 
 class CommentFunctions {
 	/**
@@ -15,9 +16,9 @@ class CommentFunctions {
 		$totalSecs = $dtDiff - ( $totalDays * 24 * 60 * 60 );
 		$dif['mo'] = intval( $totalDays / 30 );
 		$dif['d'] = $totalDays;
-		$dif['h'] = $h = intval( $totalSecs / ( 60 * 60 ) );
-		$dif['m'] = $m = intval( ( $totalSecs - ( $h * 60 * 60 ) ) / 60 );
-		$dif['s'] = $totalSecs - ( $h * 60 * 60 ) - ( $m * 60 );
+		$dif['h'] = intval( $totalSecs / ( 60 * 60 ) );
+		$dif['m'] = intval( ( $totalSecs / 60 ) );
+		$dif['s'] = $totalSecs;
 
 		return $dif;
 	}
@@ -38,24 +39,31 @@ class CommentFunctions {
 	public static function getTimeAgo( $time ) {
 		$timeArray = self::dateDiff( time(), $time );
 		$timeStr = '';
-		$timeStrMo = self::getTimeOffset( $timeArray, 'mo', 'months' );
 		$timeStrD = self::getTimeOffset( $timeArray, 'd', 'days' );
 		$timeStrH = self::getTimeOffset( $timeArray, 'h', 'hours' );
 		$timeStrM = self::getTimeOffset( $timeArray, 'm', 'minutes' );
 		$timeStrS = self::getTimeOffset( $timeArray, 's', 'seconds' );
 
-		if ( $timeStrMo ) {
-			$timeStr = $timeStrMo;
-		} else {
-			$timeStr = $timeStrD;
-			if ( $timeStr < 2 ) {
-				$timeStr .= $timeStrH;
-				$timeStr .= $timeStrM;
-				if ( !$timeStr ) {
-					$timeStr .= $timeStrS;
-				}
-			}
-		}
+        if ( (time() - $time) > (5 * 24 * 60 * 60) ) {
+            $contLang = MediaWikiServices::getInstance()->getContentLanguage();
+            $today = $contLang->date( $time );
+            return $today;
+        }
+        else {
+            if ( $timeArray["m"] < 1 ) {
+                $timeStr = $timeStrS;
+            }
+            elseif ( $timeArray["h"] < 1 ) {
+                $timeStr = $timeStrM;
+            }
+            elseif ( $timeArray["d"] < 1 ) {
+                $timeStr = $timeStrH;
+            }
+            else {
+                $timeStr = $timeStrD;
+            }
+        }
+
 		if ( !$timeStr ) {
 			$timeStr = wfMessage( 'comments-time-seconds', 1 )->parse();
 		}

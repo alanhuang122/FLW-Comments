@@ -282,11 +282,6 @@ class Comment extends ContextSource {
 
 		// make sure link text is not too long (will overflow)
 		// this function changes too long links to <a href=#>http://www.abc....xyz.html</a>
-		$commentText = preg_replace_callback(
-			"/(<a[^>]*>)(.*?)(<\/a>)/i",
-			[ 'CommentFunctions', 'cutCommentLinkText' ],
-			$commentText
-		);
 
 		return $commentText;
 	}
@@ -912,8 +907,8 @@ class Comment extends ContextSource {
 		}
 
 		// Default avatar image, if SocialProfile extension isn't enabled
-		global $wgCommentsDefaultAvatar;
-		$avatarImg = '<img src="' . $wgCommentsDefaultAvatar . '" alt="" border="0" />';
+		$imagePath = $wgExtensionAssetsPath . '/Comments/resources/images';
+		$avatarImg = '<img src="' . "{$imagePath}/default_ml.gif" . '" alt="" border="0" />';
 		// If SocialProfile *is* enabled, then use its wAvatar class to get the avatars for each commenter
 		if ( class_exists( 'wAvatar' ) ) {
 			$avatar = new wAvatar( $this->user->getId(), 'ml' );
@@ -921,29 +916,28 @@ class Comment extends ContextSource {
 		}
 
 		$output = "<div id='comment-{$this->id}' class='c-item {$containerClass}'{$style}>" . "\n";
-		$output .= "<div class=\"c-avatar\">{$avatarImg}</div>" . "\n";
 		$output .= '<div class="c-container">' . "\n";
 		$output .= '<div class="c-user">' . "\n";
 		$output .= "{$commentPoster}";
-		$output .= "<span class=\"c-user-level\">{$commentPosterLevel}</span> {$blockLink}" . "\n";
+		$output .= "{$blockLink}" . "\n";
 
-		Wikimedia\suppressWarnings(); // E_STRICT bitches about strtotime()
-		$output .= '<div class="c-time">' .
-			wfMessage(
-				'comments-time-ago',
-				CommentFunctions::getTimeAgo( strtotime( $this->date ) )
-			)->parse() . '</div>' . "\n";
-		Wikimedia\restoreWarnings();
-
-		$output .= '<div class="c-score">' . "\n";
-		$output .= $this->getScoreHTML();
-		$output .= '</div>' . "\n";
+        $output .= '<div class="c-time"><time datetime="' . $this->date . ' UTC" title="' . $this->date . ' UTC">';
+        Wikimedia\suppressWarnings(); // E_STRICT bitches about strtotime()
+        if ( (time() - strtotime($this->date)) > (5*24*60*60) ) {
+            $output .= CommentFunctions::getTimeAgo( strtotime( $this->date ) ) . '</time></div>' . "\n";
+        }
+        else {
+            $output .= wfMessage('comments-time-ago',
+                    CommentFunctions::getTimeAgo( strtotime( $this->date ) )
+                )->parse() . '</time></div>' . "\n";
+        }
+        Wikimedia\restoreWarnings();
 
 		$output .= '</div>' . "\n";
 		$output .= "<div class=\"c-comment {$comment_class}\">" . "\n";
 		$output .= $this->getText();
 		$output .= '</div>' . "\n";
-		$output .= '<div class="c-actions">' . "\n";
+		$output .= '<div class="c-actions"><p>' . "\n";
 		if ( $this->page->title ) { // for some reason doesn't always exist
 			$output .= '<a href="' . htmlspecialchars( $this->page->title->getFullURL() ) . "#comment-{$this->id}\" rel=\"nofollow\">" .
 			$this->msg( 'comments-permalink' )->plain() . '</a> ';
@@ -951,7 +945,7 @@ class Comment extends ContextSource {
 		if ( $replyRow || $dlt ) {
 			$output .= "{$replyRow} {$dlt}" . "\n";
 		}
-		$output .= '</div>' . "\n";
+		$output .= '</p></div>' . "\n";
 		$output .= '</div>' . "\n";
 		$output .= '<div class="visualClear"></div>' . "\n";
 		$output .= '</div>' . "\n";

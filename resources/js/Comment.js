@@ -382,11 +382,8 @@
 				}
 
 				if ( textareaText !== '' && !previewing ) {
-					// Disable editing the text in the textarea element until the user
-					// chooses to continue editing
-					$( '#comment' ).prop( 'disabled', true );
-
 					// Insert the "This is just a preview" text before the preview, but only once!
+          /*
 					if ( $( 'form[name="commentForm"] .comment-preview' ).html() === '' ) {
 						$( 'form[name="commentForm"] .comment-preview' ).before(
 							'<div class="comment-preview-note">' +
@@ -394,21 +391,13 @@
 							'</div>'
 						);
 					}
+          */
 
 					// Call the API to render the text given by the user into pretty wikitext!
 					Comment.preview(
 						textareaText,
 						'form[name="commentForm"] .comment-preview'
 					);
-
-					// Change the text of the "Show preview" button from "Show preview" to "Continue editing"
-					// when we are already previewing something, and make it so that upon clicking on this
-					// button the button text is changed back to "Show preview"
-					$( '.c-form-button input[name="wpPreview"]' )
-						.val( mw.msg( 'comments-continue-editing-btn' ) )
-						.click( function () {
-							$( this ).val( mw.msg( 'showpreview' ) );
-						} );
 				}
 			} )
 

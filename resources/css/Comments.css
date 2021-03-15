@@ -1,17 +1,16 @@
 /* CSS styles for Comments extension */
-.full {
-	width: 530px;
+#allcomments {
+    width: 60%
 }
 
 @media screen and (max-width: 768px) {
-	.full {
-		max-width: 100%;
+	#allcomments {
+		width: 100%;
 	}
 }
 
 .reply {
 	margin-left: 70px !important;
-	width: 460px;
 }
 
 @media screen and (max-width: 768px) {
@@ -28,7 +27,6 @@
 /* this works for Monaco, but not for Monobook.
 Besides, ny.css sets it back to 10px anyway, so this way everyone can be happy.
 	padding: 0px 0px 10px 0px;*/
-	padding: 0px 0px 35px 0px;
 	margin: 0px 0px 15px 0px;
 }
 
@@ -39,8 +37,6 @@ Besides, ny.css sets it back to 10px anyway, so this way everyone can be happy.
 }
 
 .c-avatar img {
-	padding: 3px;
-	border: 1px solid #dcdcdc;
 	background-color: #fff;
 }
 
@@ -48,7 +44,6 @@ Besides, ny.css sets it back to 10px anyway, so this way everyone can be happy.
 	position: relative;
 	top: 0px;
 	top: 0px;
-	margin: 0px 0px 0px 70px;
 }
 
 .c-user {
@@ -63,9 +58,6 @@ Besides, ny.css sets it back to 10px anyway, so this way everyone can be happy.
 }
 
 .c-time {
-	font-size: 10px;
-	color: #888;
-	line-height: 11px !important;
 	font-weight: normal !important;
 }
 
@@ -79,7 +71,7 @@ Besides, ny.css sets it back to 10px anyway, so this way everyone can be happy.
 	overflow: auto;
 }
 
-.c-ignored {
+.c-ignored, .c-deleted {
 	color: #666;
 	font-size: 11px;
 	padding: 5px 0px 10px 0px;
@@ -87,15 +79,8 @@ Besides, ny.css sets it back to 10px anyway, so this way everyone can be happy.
 	border-bottom: 1px solid #dcdcdc;
 }
 
-.c-ignored-links a {
-}
-
-.f-message {
-	width: 460px;
-}
-
-.r-message {
-	width: 360px;
+.c-ignored-links a,
+.c-deleted-links a {
 }
 
 .c-score {
@@ -131,7 +116,6 @@ Besides, ny.css sets it back to 10px anyway, so this way everyone can be happy.
 
 .c-actions {
 	float: right;
-	font-size: 10px;
 	margin: 10px 0px 0px 0px;
 }
 
@@ -178,7 +162,7 @@ textarea#comment {
 }
 
 .c-order {
-	padding: 20px 0px;
+	padding: 20px 0px 0px;
 }
 
 .c-spy {
@@ -207,4 +191,43 @@ li.c-pager-item {
 
 .cod img {
 	margin-bottom: 8px;
+}
+
+select {
+    background-color: inherit;
+}
+
+textarea {
+    background-color: inherit;
+}
+
+div.comments-body {
+    display: flow-root;
+    margin-top: 2em
+}
+
+div.c-comment > h1,
+div.c-comment > h2,
+div.c-comment > h3,
+div.c-comment > h4,
+div.c-comment > h5,
+div.c-comment > h6 {
+    font-size: 1.1em;
+}
+
+div.c-user > p {
+    margin: 0;
+}
+
+a.comments-block-user > img {
+    vertical-align: baseline;
+    height: 1em;
+}
+
+div.c-comment > a.external {
+    background-position: center right;
+    background-repeat: no-repeat;
+	background-image: url( '/w/resources/src/mediawiki.skinning/images/external-ltr.png' );
+    background-image: linear-gradient(transparent, transparent) url( '/w/resources/src/mediawiki.skinning/images/external-ltr.svg' );
+    padding-right: 13px;
 }
