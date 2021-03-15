@@ -60,6 +60,13 @@ class CommentsHooks {
 		];
 	}
 
+    public static function onBeforePageDisplay( OutputPage $out, Skin $skin ) {
+        $namespace = $out->getTitle()->getNamespace();
+        if ( $namespace == NS_MAIN || $namespace == NS_BLOG ) {
+            $out->addWikiTextAsContent('<comments/>');
+        }
+    }
+
 	/**
 	 * Adds the three new required database tables into the database when the
 	 * user runs /maintenance/update.php (the core database updater script).
