@@ -316,7 +316,7 @@ class Comment extends ContextSource {
 			'Comments',
 			[
 				'Comment_Page_ID' => $page->id,
-				'Comment_actor' => $user->getActorId(),
+				'Comment_actor' => $user->getActorId( $dbw ),
 				'Comment_Text' => $text,
 				'Comment_Date' => $dbw->timestamp( $commentDate ),
 				'Comment_Parent_ID' => $parentID,

@@ -46,13 +46,13 @@ class CommentIgnoreList extends SpecialPage {
 		$request = $this->getRequest();
 		$user = $this->getUser();
 
-		$user_name = $request->getVal( 'user' );
+        $actor_id = $request->getInt( 'actor' );
 
 		/**
 		 * Redirect anonymous users to Login Page
 		 * It will automatically return them to the CommentIgnoreList page
 		 */
-		if ( $user->getId() == 0 && $user_name == '' ) {
+		if ( $user->getId() == 0 && $actor_id == 0 ) {
 			$loginPage = SpecialPage::getTitleFor( 'Userlogin' );
 			$out->redirect( $loginPage->getLocalURL( 'returnto=Special:CommentIgnoreList' ) );
 			return;
@@ -62,7 +62,7 @@ class CommentIgnoreList extends SpecialPage {
 
 		$output = ''; // Prevent E_NOTICE
 
-		if ( $user_name == '' ) {
+		if ( $actor_id == 0 ) {
 			$output .= $this->displayCommentBlockList();
 		} else {
 			if ( $request->wasPosted() ) {
@@ -72,14 +72,12 @@ class CommentIgnoreList extends SpecialPage {
 					return;
 				}
 
-				$user_name = htmlspecialchars_decode( $user_name );
-				$user_id = User::idFromName( $user_name );
-				// Anons can be comment-blocked, but idFromName returns nothing
-				// for an anon, so...
+				$blockedUser = User::newFromActorId( $actor_id );
+                $user_id = $blockedUser->getId();
+
 				if ( !$user_id ) {
 					$user_id = 0;
 				}
-				$blockedUser = User::newFromName( $user_name );
 
 				if ( $blockedUser instanceof User ) {
 					CommentFunctions::deleteBlock( $user, $blockedUser );
@@ -132,7 +130,7 @@ class CommentIgnoreList extends SpecialPage {
 					htmlspecialchars( $user_title->getFullURL() ),
 					$user_title->getText(),
 					$lang->timeanddate( $row->cb_date ),
-					htmlspecialchars( $title->getFullURL( 'user=' . $user_title->getText() ) )
+					htmlspecialchars( $title->getFullURL( 'actor=' . $row->cb_actor_blocked ) )
 				)->text() . '</li>';
 			}
 			$out .= '</ul>';
@@ -149,7 +147,9 @@ class CommentIgnoreList extends SpecialPage {
 	 * @return string HTML
 	 */
 	private function confirmCommentBlockDelete() {
-		$user_name = $this->getRequest()->getVal( 'user' );
+        $actor_id = $this->getRequest()->getVal( 'actor' );
+        $user = User::newFromActorId( $actor_id );
+        $user_name = $user->getName();
 
 		$out = '<div class="comment_blocked_user">' .
 				$this->msg( 'comments-ignore-remove-message', $user_name )->parse() .
